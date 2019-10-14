@@ -22,7 +22,7 @@ class Train:
         project_cell = Train.trains_dates_active_wb.cell(row=self.ind + 2, column=3)  # iterate through the 1st row to assign train numbers
         schedule_id_cell = Train.trains_dates_active_wb.cell(row=self.ind + 2, column=4)  # iterate through the 1st row to assign train numbers
         self.unit_number = unit_number_cell.value #assign unit number attribute
-        self.start_date = datetime.strptime(start_date_cell.value, '%Y %m %d')  # assign datetime attribute from start date cell value
+        self.start_date = datetime.strptime(start_date_cell.value, '%Y %m %d').date()  # assign datetime attribute from start date cell value
         self.project = project_cell.value  # assign project attribute
         self.schedule_id = schedule_id_cell.value  # assign schedule id attribute
 
@@ -65,14 +65,18 @@ class Train:
         sched_list = Train.schedules.get(self.schedule_id) #create list & get schedule dict element with our schedule_id as the key
         self.split_sched_list = sched_list.split(',') #split the elements into a list, elements delimited by a comma
         temp_sched_list = [] #for storing a list of the ID's
-        for x, y in self.split_sched_list: #x is task ID and y is number of days
-            for i in range(int(y)): #for the number of days for that task
-                temp_sched_list.append(x) #append task ID by number of days assigned for it
-        day_count = 1
+        for i in self.split_sched_list:
+            sliced_id = i[0:1] #task type
+            sliced_no_days = i[1:] #no of days assigned
+            for x in range(int(sliced_no_days)):
+                temp_sched_list.append(sliced_id)
         for i in range(len(temp_sched_list)): #for the number of task types(this could be days), iterate over
-            day = 'Day ' + str(day_count) #create a day string which enumerates up each time
-            self.schedule[day] = temp_sched_list[i] #in schededule dictionary, key is day, element is task ID
-            day_count += 1 #increment day by 1
+            delta_date = self.start_date + timedelta(days=i)
+            weekday_of_date = date.isoweekday(delta_date)  # weekday (1-7) of current date
+            if weekday_of_date <= 5: #if weekday, add to dictionary
+                self.schedule[delta_date] = temp_sched_list[i] #in schededule dictionary, key is day, element is task ID
+            else: #else, iterate date by 1 until a weekday less than 5 (monday, 1) is reached
+                continue
 
 
     def createTrain():
@@ -97,4 +101,4 @@ print(Train.no_trains, 'Trains Exist')
 train = [] #create empty train list
 train.append(Train()) #create train list object for first index only
 Train.objGenerate() #run methods and generate all other train objects
-print(train[5].schedule)
+print(train[0].schedule)

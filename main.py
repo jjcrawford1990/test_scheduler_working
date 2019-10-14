@@ -14,7 +14,7 @@ dfg2 = 'white'
 dfont = 'courier 11 bold underline'
 dfont2 = 'courier 11'
 dfont3 = 'courier 15 bold italic underline'
-dfont4 = 'courier 7'
+dfont4 = 'courier 6'
 dfont5 = 'gadugi 8' #font for tasks
 
 # generate main window class and populate with windows and buttons
@@ -43,7 +43,7 @@ class Proj_select:
     # method definition of which project shall be ran, then calls the suitable method
     def frame_set(self):
         self.no_days=self.visible_days.get() #get the new value set using radio button, and assign to no_days WHY DO I NEED TO DO THIS???
-        self.cellwidth = int(208/self.no_days)
+        self.cellwidth = int(230/self.no_days)
         self.fRangeselection.destroy()  #destroy setting frame
         mainapplication = Viewing_range(self.fMainframe) #create instance of Viewing_range class, pass main frame widget to viewing range class
 
@@ -70,7 +70,13 @@ class Viewing_range(tk.Frame):
         for i in range(TrainModule.Train.no_trains): #for loop to populate the train row
             instanceholder = 'Train ' + str(train[i].unit_number) #create a temporary variable for storing the new label attribute name
             self.trainlabel= Label(self.fRangewindow, text=instanceholder, bg=dbg, fg=dfg2, font=dfont, borderwidth=2, relief="sunken").grid(row=i+2, column=0,sticky=NSEW) #create a label
-
+            for n in range(mainapp.no_days):
+                delta_date = date.today() + timedelta(days=n) #calculate iterated date
+                try: #try and retrieve element of key which is current date
+                    instanceholder2 = train[i].schedule[delta_date]
+                    self.ltask = Label(self.fRangewindow, text = instanceholder2, bg=dbg, fg=dfg2).grid(row=i+2, column=n+1)
+                except KeyError: #if the dictionary does not have this key/date (e.g. not started, train left), put blank in cell
+                    self.ltask = Label(self.fRangewindow, text=" ", bg=dbg, fg=dfg2).grid(row=i + 2, column=n + 1)
         for i in range(mainapp.no_days):
             date_increase = date.today() + timedelta(i)
             instanceholder = date.__format__(date_increase, '%a %d %b')
