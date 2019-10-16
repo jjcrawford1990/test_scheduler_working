@@ -10,12 +10,13 @@ dbg = '#334157'
 # default fg colours (font colour)
 dfg = 'silver'
 dfg2 = 'white'
+actualbg = 'dodgerblue3'
 # default fonts
 dfont = 'courier 11 bold underline'
 dfont2 = 'courier 11'
-dfont3 = 'courier 15 bold italic underline'
-dfont4 = 'courier 6'
-dfont5 = 'gadugi 8' #font for tasks
+dfont3 = 'helvetica 15 bold italic underline'
+dfont4 = 'helvetica 6 bold underline'
+dfont5 = 'courier 8 bold' #font for tasks
 
 # generate main window class and populate with windows and buttons
 
@@ -51,36 +52,45 @@ class Viewing_range(tk.Frame):
 
     def __init__(self, master):
         self.master = master #master is fMainframe
-        self.fRangewindow = Frame(master)
+        self.fRangewindow = Frame(master, bg=dbg)
         self.fRangewindow.grid(row=0, rowspan = TrainModule.Train.no_trains + 2, column=0, columnspan=mainapp.no_days + 1, sticky=NSEW)
-        self.lTitle = Label(self.fRangewindow, text='NAY Test Scheduler', bg=dbg, fg=dfg2, font=dfont3, borderwidth=2, relief="sunken")
-        self.lTitle.grid(row=0, column=0, columnspan = mainapp.no_days + 1, sticky=NSEW)
+        self.title_image = PhotoImage(file='C:\\Users\\Josh\\Desktop\\naytstitle.gif')
+        self.lTitle = Label(self.fRangewindow, image=self.title_image, bg=dbg)
+        self.lTitle.grid(row=0, column=0, columnspan = mainapp.no_days + 2, sticky=NSEW)
         self.bAddtrain = Button(self.fRangewindow, text='Add Trainset')
-        self.bAddtrain.grid(row=TrainModule.Train.no_trains + 2, column=0, columnspan = int(mainapp.no_days*0.25))
+        self.bAddtrain.grid(row=(TrainModule.Train.no_trains*2)+2, column=0, columnspan = int(mainapp.no_days*0.25))
         self.bApplyscenario = Button(self.fRangewindow, text='Apply Scenario', command=self.scenarioselect)
-        self.bApplyscenario.grid(row=TrainModule.Train.no_trains + 2, column=int((mainapp.no_days+1)*0.25), columnspan = int(mainapp.no_days*0.25))
+        self.bApplyscenario.grid(row=(TrainModule.Train.no_trains*2)+2, column=int((mainapp.no_days+1)*0.25), columnspan = int(mainapp.no_days*0.25))
         self.bDisplayend = Button(self.fRangewindow, text='Display End Dates')
-        self.bDisplayend.grid(row=TrainModule.Train.no_trains + 2, column=int((mainapp.no_days+1)*0.5), columnspan = int(mainapp.no_days*0.25))
+        self.bDisplayend.grid(row=(TrainModule.Train.no_trains*2) + 2, column=int((mainapp.no_days+1)*0.5), columnspan = int(mainapp.no_days*0.25))
         self.bSave = Button(self.fRangewindow, text='Save Changes')
-        self.bSave.grid(row=TrainModule.Train.no_trains + 2, column=int((mainapp.no_days+1)*0.75), columnspan = int(mainapp.no_days*0.25))
+        self.bSave.grid(row=(TrainModule.Train.no_trains*2)+2, column=int((mainapp.no_days+1)*0.75), columnspan = int(mainapp.no_days*0.25))
         self.range_populate() #run range populate method, seperate to allow for range changing without re-writing whole window
         print(TrainModule.Train.no_trains)
 
     def range_populate(self):
         for i in range(TrainModule.Train.no_trains): #for loop to populate the train row
             instanceholder = 'Train ' + str(train[i].unit_number) #create a temporary variable for storing the new label attribute name
-            self.trainlabel= Label(self.fRangewindow, text=instanceholder, bg=dbg, fg=dfg2, font=dfont, borderwidth=2, relief="sunken").grid(row=i+2, column=0,sticky=NSEW) #create a label
+            self.trainlabel= Label(self.fRangewindow, text=instanceholder, bg='white', fg=dbg, font=dfont, borderwidth=1, relief="sunken").grid(row=(i*2)+2, rowspan = 2, column=0,sticky=NSEW) #create a label
+            self.lideal = Label(self.fRangewindow, text='Plan:', bg=dbg, fg=dfg2, font=dfont4).grid(row=(i*2)+2, column=1)
+            self.lactual = Label(self.fRangewindow, text='Live:', bg=dbg, fg=dfg2, font=dfont4).grid(row=(i*2)+3, column=1)
             for n in range(mainapp.no_days):
                 delta_date = date.today() + timedelta(days=n) #calculate iterated date
                 try: #try and retrieve element of key which is current date
-                    instanceholder2 = train[i].schedule[delta_date]
-                    self.ltask = Label(self.fRangewindow, text = instanceholder2, bg=dbg, fg=dfg2).grid(row=i+2, column=n+1)
+                    instanceholder2 = TrainModule.Train.task_types.get(train[i].schedule[delta_date]) #get dict element from key
+                    self.ltask = Label(self.fRangewindow, text = instanceholder2, bg=dbg, fg=dfg2).grid(row=(i*2)+2, column=n+2)
                 except KeyError: #if the dictionary does not have this key/date (e.g. not started, train left), put blank in cell
-                    self.ltask = Label(self.fRangewindow, text=" ", bg=dbg, fg=dfg2).grid(row=i + 2, column=n + 1)
+                    self.ltask = Label(self.fRangewindow, text=" ", bg='red').grid(row=(i*2) + 2, column=n + 2)
+                try:
+                    instanceholder3 = TrainModule.Train.task_types.get(train[i].live_schedule[delta_date])
+                    self.lactual_task = Label(self.fRangewindow, text=instanceholder3, bg=actualbg, fg=dfg2).grid(row=(i * 2) + 3, column=n + 2)
+                except KeyError:  # if the dictionary does not have this key/date (e.g. not started, train left), put blank in cell
+                    self.lactual_task = Label(self.fRangewindow, text=" ", bg='red').grid(row=(i * 2) + 3, column=n + 2)
+
         for i in range(mainapp.no_days):
             date_increase = date.today() + timedelta(i)
             instanceholder = date.__format__(date_increase, '%a %d %b')
-            self.daylabel = Label(self.fRangewindow, text = instanceholder, bg=dbg, fg=dfg2, font=dfont4, width=mainapp.cellwidth).grid(row=1, column=i+1, sticky=NSEW)
+            self.daylabel = Label(self.fRangewindow, text = instanceholder + '|', bg=dbg, fg=dfg2, font=dfont4, width=mainapp.cellwidth).grid(row=1, column=i+2, sticky=NSEW)
 
     def scenarioselect(self):
         self.scenario_live_selection = StringVar() #tkinter Stringvar

@@ -2,8 +2,63 @@ import openpyxl
 from datetime import *
 
 trains_dates_excel = 'C:\\Users\\Josh\\Desktop\\trains&dates.xlsx'  # path of the start dates & trains file to be read
+schedule_excel = 'C:\\Users\\Josh\\Desktop\\schedule.xlsx'  # path of the start dates & trains file to be read
 
-class Train:
+
+
+class LiveSchedule:
+    test_hours_list=[]
+    test_hours_total = 0
+    no_shifts = 0
+    shift_length = 7.5
+    remaining_shifts = 0
+
+
+    @classmethod
+    def scheduleHours(cls):
+        cls.schedule_wb = openpyxl.load_workbook(schedule_excel)  # create a class object of the active workbook within trains_dates excel
+        cls.schedule_active_wb = cls.schedule_wb.active  # create a class object of the active workbook
+        cls.schedule_ws = cls.schedule_wb.worksheets[0]  # create a class object of the first worksheet within trains_dates excel
+        cls.no_tests = cls.schedule_ws.max_row - 1
+        for i in range(cls.no_tests):
+            cls.test_hours_list.append(cls.schedule_active_wb.cell(row=i+2, column=3).value)
+        for i in range(cls.no_tests):
+            cls.test_hours_total += cls.test_hours_list[i]
+        cls.no_shifts = round(cls.test_hours_total / cls.shift_length) #rounded number of shifts to complete testing
+
+    def remainingHours(self):
+        self.test_list = []
+        self.test_completion = []
+        self.test_area_id = []
+        self.actual_schedule = {'A': 0, 'B': LiveSchedule.no_shifts, 'C': 0}
+        for i in range(LiveSchedule.no_tests):
+            train_number_worksheet = 'T' + str(self.unit_number)
+            self.test_list.append(LiveSchedule.schedule_active_wb.cell(row=i+2, column=1).value)
+            self.test_completion.append(LiveSchedule.schedule_wb[train_number_worksheet].cell(row=i+2, column=6).value) #open worksheet of train schedule
+            self.test_area_id.append(LiveSchedule.schedule_active_wb.cell(row=i+2, column=7).value)
+        self.zipped_tests = zip(self.test_list, LiveSchedule.test_hours_list, self.test_completion, self.test_area_id)
+        remaining_hours_subtraction = 0
+        for w, x, y, z in self.zipped_tests:
+            if y == 'Y':
+                remaining_hours_subtraction += x
+                self.actual_schedule[z] - (x/LiveSchedule.shift_length)
+            else:
+                continue
+        self.remaining_hours = LiveSchedule.test_hours_total - remaining_hours_subtraction
+        self.remaining_shifts = round(self.remaining_hours / LiveSchedule.shift_length)
+        self.live_schedule = {}
+        temp_sched_list = ['B'] * self.remaining_shifts
+        for i in range(self.remaining_shifts):  # for the number of task types(this could be days), iterate over
+            delta_date = date.today() + timedelta(days=i)
+            weekday_of_date = date.isoweekday(delta_date)  # weekday (1-7) of current date
+            if weekday_of_date <= 5:  # if weekday, add to dictionary
+                self.live_schedule[delta_date] = temp_sched_list[i]  # in schededule dictionary, key is day, element is task ID
+            else:
+                # else, iterate date by 1 until a weekday less than 5 (monday, 1) is reached
+                continue
+
+
+class Train(LiveSchedule):
 
     no_trains = 0 #class attribute for number of trains
     obj_generation_count = 0 #to count if this is initial or re-generation of train objects
@@ -14,6 +69,7 @@ class Train:
         Train.trains_dates_active_wb = Train.trains_dates_wb.active  # create a class object of the active workbook
         Train.trains_dates_ws = Train.trains_dates_wb.worksheets[0]  # create a class object of the first worksheet within trains_dates excel
         cls.no_trains = Train.trains_dates_ws.max_row - 1  # count the rows and minus the header row
+
 
     def assignTrainData(self, train_index):
         self.ind = train_index #attribute which is index number of train object within the 'train' list
@@ -75,7 +131,8 @@ class Train:
             weekday_of_date = date.isoweekday(delta_date)  # weekday (1-7) of current date
             if weekday_of_date <= 5: #if weekday, add to dictionary
                 self.schedule[delta_date] = temp_sched_list[i] #in schededule dictionary, key is day, element is task ID
-            else: #else, iterate date by 1 until a weekday less than 5 (monday, 1) is reached
+            else:
+                #else, iterate date by 1 until a weekday less than 5 (monday, 1) is reached
                 continue
 
 
@@ -94,6 +151,7 @@ class Train:
     def deleteTrain():
         pass
 
+LiveSchedule.scheduleHours()
 Train.trainCount()
 Train.taskTypes()
 Train.scheduleDictionary()
@@ -101,4 +159,5 @@ print(Train.no_trains, 'Trains Exist')
 train = [] #create empty train list
 train.append(Train()) #create train list object for first index only
 Train.objGenerate() #run methods and generate all other train objects
-print(train[0].schedule)
+for i in range(Train.no_trains):
+    train[i].remainingHours()
