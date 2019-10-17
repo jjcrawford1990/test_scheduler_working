@@ -57,7 +57,6 @@ class LiveSchedule:
                 # else, iterate date by 1 until a weekday less than 5 (monday, 1) is reached
                 continue
 
-
 class Train(LiveSchedule):
 
     no_trains = 0 #class attribute for number of trains
@@ -114,7 +113,7 @@ class Train(LiveSchedule):
         Train.schedules = {}  # schedule dictionary instantiate
         for i in range(Train.no_of_schedules):
             # the below adds key (schedule type) and element (construction) to dictionary
-            Train.schedules[Train.schedules_ws.cell(row=i + 2, column=1).value] = Train.schedules_ws.cell(row=i + 2, column=3).value
+            Train.schedules[Train.schedules_ws.cell(row=i + 2, column=1).value] = Train.schedules_ws.cell(row=i + 2, column=2).value
 
     def scheduleGenerate(self):
         self.schedule = {} #create empty dictionary. this will store the objects schedule

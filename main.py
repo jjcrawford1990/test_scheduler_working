@@ -57,7 +57,7 @@ class Viewing_range(tk.Frame):
         self.title_image = PhotoImage(file='C:\\Users\\Josh\\Desktop\\naytstitle.gif')
         self.lTitle = Label(self.fRangewindow, image=self.title_image, bg=dbg)
         self.lTitle.grid(row=0, column=0, columnspan = mainapp.no_days + 2, sticky=NSEW)
-        self.bAddtrain = Button(self.fRangewindow, text='Add Trainset')
+        self.bAddtrain = Button(self.fRangewindow, text='Add Trainset', command=self.addTrain)
         self.bAddtrain.grid(row=(TrainModule.Train.no_trains*2)+2, column=0, columnspan = int(mainapp.no_days*0.25))
         self.bApplyscenario = Button(self.fRangewindow, text='Apply Scenario', command=self.scenarioselect)
         self.bApplyscenario.grid(row=(TrainModule.Train.no_trains*2)+2, column=int((mainapp.no_days+1)*0.25), columnspan = int(mainapp.no_days*0.25))
@@ -80,12 +80,12 @@ class Viewing_range(tk.Frame):
                     instanceholder2 = TrainModule.Train.task_types.get(train[i].schedule[delta_date]) #get dict element from key
                     self.ltask = Label(self.fRangewindow, text = instanceholder2, bg=dbg, fg=dfg2).grid(row=(i*2)+2, column=n+2)
                 except KeyError: #if the dictionary does not have this key/date (e.g. not started, train left), put blank in cell
-                    self.ltask = Label(self.fRangewindow, text=" ", bg='red').grid(row=(i*2) + 2, column=n + 2)
+                    self.ltask = Label(self.fRangewindow, text="    ", bg='red').grid(row=(i*2) + 2, column=n + 2)
                 try:
                     instanceholder3 = TrainModule.Train.task_types.get(train[i].live_schedule[delta_date])
                     self.lactual_task = Label(self.fRangewindow, text=instanceholder3, bg=actualbg, fg=dfg2).grid(row=(i * 2) + 3, column=n + 2)
                 except KeyError:  # if the dictionary does not have this key/date (e.g. not started, train left), put blank in cell
-                    self.lactual_task = Label(self.fRangewindow, text=" ", bg='red').grid(row=(i * 2) + 3, column=n + 2)
+                    self.lactual_task = Label(self.fRangewindow, text="    ", bg='red').grid(row=(i * 2) + 3, column=n + 2)
 
         for i in range(mainapp.no_days):
             date_increase = date.today() + timedelta(i)
@@ -127,6 +127,49 @@ class Viewing_range(tk.Frame):
         self.date_choice = self.date_live_selection.get()  # take tk stringvar and assign to str variable
         self.fScenariowindow.destroy()
         self.lshow_scenario_choice = Label(self.fRangewindow, text=self.scenario_choice + ' Applied, ' + self.date_choice, bg=dbg, fg=dfg2, font=dfont2, borderwidth=2, relief="sunken").grid(row=20, column=0, columnspan=mainapp.no_days+1, sticky=NSEW) #create a label
+
+    def addTrain(self):
+        self.project_selection = StringVar()  # tkinter Stringvar
+        self.default_schedule_selection = StringVar()  # tkinter Stringvar
+        self.fAddtrain = Frame(self.master)
+        self.fAddtrain.grid(row=3, column=0, padx=100, pady=100)
+        lAddtraintitle = Label(self.fAddtrain, text='Add Train')
+        lAddtraintitle.grid(row=4, column=0, columnspan=3)
+        lProject = Label(self.fAddtrain, text='Choose Project')
+        lProject.grid(row=5, column=0, columnspan=3)
+        project_tuple = ['ASR', 'IEP', 'Milano']
+        project_options = OptionMenu(self.fAddtrain, self.project_selection, *project_tuple)  # option menu
+        project_options.grid(row=5, column=1, columnspan=1)
+        lUnitnumber = Label(self.fAddtrain, text='Unit No:')
+        lUnitnumber.grid(row=6, column=0, columnspan=1)
+        self.eUnitnumber = Entry(self.fAddtrain)
+        self.eUnitnumber.grid(row=6, column=1, columnspan=1)
+        lDate = Label(self.fAddtrain, text='Start Date\n(0=Today,7=7days from now):')
+        lDate.grid(row=7, column=0, columnspan=1)
+        self.eDateset = Entry(self.fAddtrain)
+        self.eDateset.grid(row=7, column=1, columnspan=1)
+        lDefaultschedule = Label(self.fAddtrain, text='Choose Schedule')
+        lDefaultschedule.grid(row=8, column=0, columnspan=1)
+        def_schedule_tuple = tuple(TrainModule.Train.schedules.keys())
+        def_schedule_options = OptionMenu(self.fAddtrain, self.default_schedule_selection, *def_schedule_tuple)  # option menu
+        def_schedule_options.grid(row=8, column=1, columnspan=2)
+        self.bSetunitnumber = Button(self.fAddtrain, text='Set!', command=self.unitSave)
+        self.bSetunitnumber.grid(row=9, column=0, columnspan=3)
+
+    def unitSave(self):
+        self.new_train = self.eUnitnumber.get()
+        self.project_choice = self.project_selection.get()
+        self.start_date_choice = int(self.eDateset.get())
+        self.default_schedule_choice = self.default_schedule_selection.get()
+        self.start_date_choice_2 = date.today() + timedelta(days=self.start_date_choice) #calculate iterated date
+        self.start_date_choice_3 = self.start_date_choice_2.strftime('%Y %m %d')
+        TrainModule.Train.trains_dates_ws.cell(row=TrainModule.Train.no_trains + 2, column=1).value = self.new_train
+        TrainModule.Train.trains_dates_ws.cell(row=TrainModule.Train.no_trains + 2, column=2).value = self.start_date_choice_3
+        TrainModule.Train.trains_dates_ws.cell(row=TrainModule.Train.no_trains + 2, column=3).value = self.project_choice
+        TrainModule.Train.trains_dates_ws.cell(row=TrainModule.Train.no_trains + 2, column=4).value = self.default_schedule_choice
+        TrainModule.Train.trains_dates_wb.save('C:\\Users\\Josh\\Desktop\\trains&dates.xlsx')
+        self.fAddtrain.destroy()
+
 
 # root is the main window
 topLevel = Tk() #create top level widget object (window) of Tk class.
